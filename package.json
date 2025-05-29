@@ -1,0 +1,46 @@
+{
+  "name": "ejaan-rs",
+  "version": "0.1.0",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "author": {
+    "name": "noaione",
+    "email": "noaione@n4o.xyz"
+  },
+  "readme": "README.md",
+  "napi": {
+    "name": "ejaan-rs",
+    "triples": {
+      "defaults": false,
+      "additional": [
+        "x86_64-apple-darwin",
+        "aarch64-apple-darwin",
+        "x86_64-pc-windows-msvc",
+        "i686-pc-windows-msvc",
+        "aarch64-pc-windows-msvc"
+      ]
+    }
+  },
+  "repository": "git@github.com:noaione/ejaan-napi-rs.git",
+  "license": "MIT OR Apache-2.0",
+  "devDependencies": {
+    "@napi-rs/cli": "^2.18.4",
+    "ava": "^6.0.1"
+  },
+  "ava": {
+    "timeout": "3m"
+  },
+  "engines": {
+    "node": ">=18.17.0"
+  },
+  "scripts": {
+    "artifacts": "napi artifacts",
+    "build": "napi build --platform --release",
+    "build:debug": "napi build --platform",
+    "prepublishOnly": "napi prepublish -t npm",
+    "test": "ava",
+    "universal": "napi universal",
+    "version": "napi version"
+  },
+  "packageManager": "yarn@4.9.1"
+}
