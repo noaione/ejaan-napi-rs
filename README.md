@@ -20,15 +20,15 @@ A simple Rust + Node.js library for checking spelling using Native system librar
 ## Installation
 
 ```bash
-npm install ejaan-rs
+npm install @noaione/ejaan-rs
 # Or
-yarn add ejaan-rs
+yarn add @noaione/ejaan-rs
 ```
 
 ## Usages
 
 ```javascript
-import { SpellChecker } from 'ejaan-rs';
+import { SpellChecker } from '@noaione/ejaan-rs';
 
 const spellChecker = new SpellChecker();
 

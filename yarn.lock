@@ -54,6 +54,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@noaione/ejaan-rs@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "@noaione/ejaan-rs@workspace:."
+  dependencies:
+    "@napi-rs/cli": "npm:^2.18.4"
+    ava: "npm:^6.0.1"
+  languageName: unknown
+  linkType: soft
+
 "@nodelib/fs.scandir@npm:2.1.5":
   version: 2.1.5
   resolution: "@nodelib/fs.scandir@npm:2.1.5"
@@ -532,15 +541,6 @@ __metadata:
   checksum: 10c0/26f364ebcdb6395f95124fda411f63137a4bfb5d3a06453f7f23dfe52502905bd84e0488172e0f9ec295fdc45f05c23d5d91baf16bd26f0fe9acd777a188dc39
   languageName: node
   linkType: hard
-
-"ejaan-rs@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "ejaan-rs@workspace:."
-  dependencies:
-    "@napi-rs/cli": "npm:^2.18.4"
-    ava: "npm:^6.0.1"
-  languageName: unknown
-  linkType: soft
 
 "emittery@npm:^1.1.0":
   version: 1.1.0
