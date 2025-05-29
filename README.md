@@ -6,7 +6,7 @@
 A simple Rust + Node.js library for checking spelling using Native system libraries.
 
 ## API Used
-- Windows: [ISpellChecker2](https://learn.microsoft.com/en-us/windows/win32/api/spellcheck/nn-spellcheck-ispellchecker2)
+- Windows: [ISpellChecker](https://learn.microsoft.com/en-us/windows/win32/api/spellcheck/nn-spellcheck-ispellchecker)
 - macOS: [NSSpellChecker](https://developer.apple.com/documentation/appkit/nsspellchecker?language=objc)
 - Linux: Unavailable
 
