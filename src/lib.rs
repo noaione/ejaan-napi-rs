@@ -68,12 +68,22 @@ pub trait SpellCheckerImpl {
 /// The main Spell checker class.
 ///
 /// This automatically determine the appropriate spell checker implementation based on the platform.
+///
+/// As a sidenote, all API returned can throw an error, especially on Windows.
+///
+/// @class SpellChecker
 #[napi]
 pub struct SpellChecker {
     inner: Box<dyn SpellCheckerImpl>,
 }
 
 /// A suggestion for a misspelled word.
+///
+/// @typedef {Object} Suggestion
+/// @property {number} start The start index of the string
+/// @property {number} end The end index of the string
+/// @property {string} word The misspelled word
+/// @property {string[]} suggestions The list of suggested words
 #[napi(object, js_name = "Suggestion")]
 pub struct JsSuggestion {
     /// The start index of the misspelled word in the original text.
@@ -107,12 +117,17 @@ impl SpellChecker {
     }
 
     /// Get the current language of the spell checker.
+    ///
+    /// @returns {string | null}
     #[napi]
     pub fn language(&self) -> napi::Result<Option<String>> {
         Ok(self.inner.get_language()?)
     }
 
     /// Set the language for the spell checker.
+    ///
+    /// @param {string} language The preferred spell checker language.
+    /// @returns {void}
     #[napi]
     pub fn set_language(&mut self, language: String) -> napi::Result<()> {
         if !self.inner.set_language(&language)? {
@@ -126,8 +141,7 @@ impl SpellChecker {
 
     /// Get the list of available languages for the spell checker.
     ///
-    /// # Returns
-    /// A list of available languages.
+    /// @returns {string[]} A list of available languages.
     #[napi]
     pub fn available_languages(&self) -> napi::Result<Vec<String>> {
         Ok(self.inner.get_available_languages()?)
@@ -135,8 +149,8 @@ impl SpellChecker {
 
     /// Check if a word is spelled correctly.
     ///
-    /// # Arguments
-    /// * `word` - The word to check.
+    /// @param {string} word The word to check
+    /// @returns {boolean} Is the word spelled correctly or not.
     #[napi]
     pub fn check_word(&self, word: String) -> napi::Result<bool> {
         Ok(self.inner.check_word(&word)?)
@@ -146,8 +160,8 @@ impl SpellChecker {
     ///
     /// This will also return a list of suggestions if the word is misspelled.
     ///
-    /// # Arguments
-    /// * `sentences` - The sentence to check.
+    /// @param {string} sentences The sentences to check
+    /// @returns {Suggestion[]} The list of suggested spellings.
     #[napi]
     pub fn check_and_suggest(&self, sentences: String) -> napi::Result<Vec<JsSuggestion>> {
         let tokens = self.inner.check_sentences(&sentences)?;
@@ -157,18 +171,18 @@ impl SpellChecker {
 
     /// Add a single word to the spell checker.
     ///
-    /// # Arguments
-    /// * `word` - The word to add.
+    /// @param {string} word The word to add
+    /// @returns {void}
     #[napi]
     pub fn add_word(&self, word: String) -> napi::Result<()> {
         self.inner.add_word(&word)?;
         Ok(())
     }
 
-    /// Add a words to the spell checker.
+    /// Add words to the spell checker.
     ///
-    /// # Arguments
-    /// * `words` - The words to add.
+    /// @param {string[]} words The words to add
+    /// @returns {void}
     #[napi]
     pub fn add_words(&self, words: Vec<String>) -> napi::Result<()> {
         self.inner.add_words(words)?;
@@ -177,11 +191,11 @@ impl SpellChecker {
 
     /// Remove a single word from the spell checker.
     ///
-    /// # Arguments
-    /// * `word` - The word to remove.
-    ///
-    /// # Note
+    /// ## Note
     /// On Windows, this will always just silently fails.
+    ///
+    /// @param {string} word The word to remove
+    /// @returns {void}
     #[napi]
     pub fn remove_word(&self, word: String) -> napi::Result<()> {
         self.inner.remove_word(&word)?;
@@ -190,11 +204,11 @@ impl SpellChecker {
 
     /// Remove words from the spell checker.
     ///
-    /// # Arguments
-    /// * `words` - The words to remove.
-    ///
-    /// # Note
+    /// ## Note
     /// On Windows, this will always just silently fails.
+    ///
+    /// @param {string[]} words The words to remove
+    /// @returns {void}
     #[napi]
     pub fn remove_words(&self, words: Vec<String>) -> napi::Result<()> {
         self.inner.remove_words(words)?;
