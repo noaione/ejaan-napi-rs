@@ -50,17 +50,37 @@ export declare class SpellChecker {
    */
   checkAndSuggest(sentences: string): Array<Suggestion>
   /**
-   * Add a word to the spell checker.
+   * Add a single word to the spell checker.
    *
    * # Arguments
-   * * `words` - The word to add.
+   * * `word` - The word to add.
+   */
+  addWord(word: string): void
+  /**
+   * Add a words to the spell checker.
+   *
+   * # Arguments
+   * * `words` - The words to add.
    */
   addWords(words: Array<string>): void
   /**
-   * Remove a word from the spell checker.
+   * Remove a single word from the spell checker.
    *
    * # Arguments
-   * * `words` - The word to remove.
+   * * `word` - The word to remove.
+   *
+   * # Note
+   * On Windows, this will always just silently fails.
+   */
+  removeWord(word: string): void
+  /**
+   * Remove words from the spell checker.
+   *
+   * # Arguments
+   * * `words` - The words to remove.
+   *
+   * # Note
+   * On Windows, this will always just silently fails.
    */
   removeWords(words: Array<string>): void
 }

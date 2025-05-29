@@ -155,20 +155,46 @@ impl SpellChecker {
         Ok(tokens.into_iter().map(JsSuggestion::from).collect())
     }
 
-    /// Add a word to the spell checker.
+    /// Add a single word to the spell checker.
     ///
     /// # Arguments
-    /// * `words` - The word to add.
+    /// * `word` - The word to add.
+    #[napi]
+    pub fn add_word(&self, word: String) -> napi::Result<()> {
+        self.inner.add_word(&word)?;
+        Ok(())
+    }
+
+    /// Add a words to the spell checker.
+    ///
+    /// # Arguments
+    /// * `words` - The words to add.
     #[napi]
     pub fn add_words(&self, words: Vec<String>) -> napi::Result<()> {
         self.inner.add_words(words)?;
         Ok(())
     }
 
-    /// Remove a word from the spell checker.
+    /// Remove a single word from the spell checker.
     ///
     /// # Arguments
-    /// * `words` - The word to remove.
+    /// * `word` - The word to remove.
+    ///
+    /// # Note
+    /// On Windows, this will always just silently fails.
+    #[napi]
+    pub fn remove_word(&self, word: String) -> napi::Result<()> {
+        self.inner.remove_word(&word)?;
+        Ok(())
+    }
+
+    /// Remove words from the spell checker.
+    ///
+    /// # Arguments
+    /// * `words` - The words to remove.
+    ///
+    /// # Note
+    /// On Windows, this will always just silently fails.
     #[napi]
     pub fn remove_words(&self, words: Vec<String>) -> napi::Result<()> {
         self.inner.remove_words(words)?;
