@@ -1,5 +1,7 @@
 use std::ops::RangeInclusive;
 
+pub type EjaanError<T> = Result<T, Error>;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     start: usize,
@@ -8,7 +10,7 @@ pub struct Token {
 }
 
 impl Token {
-    fn new(start: usize, end: usize, word: String) -> Self {
+    pub(crate) fn new(start: usize, end: usize, word: String) -> Self {
         Token { start, end, word }
     }
 
@@ -29,6 +31,35 @@ impl Token {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct TokenWithSuggestions {
+    token: Token,
+    suggestions: Vec<String>,
+}
+
+impl TokenWithSuggestions {
+    pub(crate) fn new(token: Token, suggestions: Vec<String>) -> Self {
+        TokenWithSuggestions { token, suggestions }
+    }
+
+    pub fn token(&self) -> &Token {
+        &self.token
+    }
+
+    pub fn suggestions(&self) -> &[String] {
+        &self.suggestions
+    }
+}
+
+impl std::ops::Deref for TokenWithSuggestions {
+    type Target = Token;
+
+    fn deref(&self) -> &Self::Target {
+        &self.token
+    }
+}
+
+#[cfg(target_os = "macos")]
 pub fn tokenize_sentence(sentence: &str) -> Vec<Token> {
     // Super quick and naive sentences splitter
     let mut tokens = Vec::new();
@@ -58,14 +89,48 @@ pub fn tokenize_sentence(sentence: &str) -> Vec<Token> {
     tokens
 }
 
+/// Error type for the spell checker
+#[derive(Debug, Clone)]
+pub struct Error {
+    message: String,
+}
+
+impl Error {
+    pub fn new(message: &str) -> Self {
+        Error {
+            message: message.to_string(),
+        }
+    }
+
+    pub fn message(&self) -> &str {
+        &self.message
+    }
+}
+
+impl From<Error> for napi::Error {
+    fn from(err: Error) -> Self {
+        napi::Error::from_reason(err.message)
+    }
+}
+
+#[cfg(target_os = "windows")]
+impl From<windows::core::Error> for Error {
+    fn from(err: windows::core::Error) -> Self {
+        Error::new(&format!(
+            "Windows error: {} (code: {})",
+            err.message(),
+            err.code().0
+        ))
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
+    #[cfg(target_os = "macos")]
     fn test_tokenize_sentence() {
         let sentence = "Hello, world! This is a test.";
-        let tokens = tokenize_sentence(sentence);
+        let tokens = super::tokenize_sentence(sentence);
         println!("{:?}", tokens);
         assert_eq!(tokens.len(), 6);
         assert_eq!(tokens[0], Token::new(0, 5, "Hello,".to_string()));

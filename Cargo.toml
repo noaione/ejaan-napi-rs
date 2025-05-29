@@ -16,8 +16,9 @@ napi-derive = "2.16.13"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 # Windows specific dependencies
-windows-sys = { version = "0.59.0", default-features = false, features = [
+windows = { version = "0.61.1", default-features = false, features = [
     "Win32_Foundation",
+    "Win32_System_Com",
     "Win32_Globalization",
 ] }
 

@@ -44,7 +44,7 @@ impl SpellCheckerImpl for AppleSpellChecker {
         }
     }
 
-    fn set_language(&self, language: &str) -> bool {
+    fn set_language(&mut self, language: &str) -> bool {
         unsafe {
             // &str -> NSString
             let ns_language = NSString::from_str(language);
