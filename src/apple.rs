@@ -6,7 +6,7 @@ use objc2_foundation::{NSRange, NSString};
 
 use crate::{
     SpellCheckerImpl,
-    utils::{Token, tokenize_sentence},
+    utils::{EjaanError, TokenWithSuggestions, tokenize_sentence},
 };
 
 pub struct AppleSpellChecker {
@@ -22,76 +22,6 @@ impl AppleSpellChecker {
             shared.setAutomaticallyIdentifiesLanguages(true);
             Self { shared }
         }
-    }
-}
-
-impl SpellCheckerImpl for AppleSpellChecker {
-    fn add_word(&self, word: &str) -> () {
-        unsafe {
-            // &str -> NSString
-            let ns_word = NSString::from_str(word);
-            self.shared.learnWord(&ns_word);
-        }
-    }
-
-    fn remove_word(&self, word: &str) -> () {
-        unsafe {
-            // &str -> NSString
-            let ns_word = NSString::from_str(word);
-            if self.shared.hasLearnedWord(&ns_word) {
-                self.shared.unlearnWord(&ns_word);
-            }
-        }
-    }
-
-    fn set_language(&mut self, language: &str) -> bool {
-        unsafe {
-            // &str -> NSString
-            let ns_language = NSString::from_str(language);
-            self.shared.setLanguage(&ns_language)
-        }
-    }
-
-    fn get_available_languages(&self) -> Vec<String> {
-        unsafe {
-            let languages = self.shared.availableLanguages();
-            // Iterate over the NSArray and convert to Vec<String>
-            let counter = languages.count();
-            let mut result = Vec::with_capacity(counter);
-            for i in 0..counter {
-                let lang = languages.objectAtIndex(i);
-                autoreleasepool(|pool| {
-                    let lang_str = lang.to_str(pool);
-                    result.push(lang_str.to_string());
-                })
-            }
-
-            result
-        }
-    }
-
-    fn check_word(&self, word: &str) -> bool {
-        unsafe {
-            let ns_word = NSString::from_str(word);
-            let ranges = self.shared.checkSpellingOfString_startingAt(&ns_word, 0);
-            // If the range is empty, the word is spelled correctly
-            ranges.is_empty()
-        }
-    }
-
-    fn check_sentence(&self, sentence: &str) -> Vec<Token> {
-        let tokenized = tokenize_sentence(sentence);
-        tokenized
-            .iter()
-            .filter_map(|token| {
-                if self.check_word(token.word()) {
-                    None // Word is spelled correctly, no need to collect
-                } else {
-                    // Word is misspelled, collect the range
-                    Some(token.clone())
-                }
-            })
-            .collect()
     }
 
     fn suggest(&self, word: &str) -> Vec<String> {
@@ -120,14 +50,89 @@ impl SpellCheckerImpl for AppleSpellChecker {
             }
         }
     }
+}
 
-    fn get_language(&self) -> Option<String> {
+impl SpellCheckerImpl for AppleSpellChecker {
+    fn add_word(&self, word: &str) -> EjaanError<()> {
+        unsafe {
+            // &str -> NSString
+            let ns_word = NSString::from_str(word);
+            self.shared.learnWord(&ns_word);
+            Ok(())
+        }
+    }
+
+    fn remove_word(&self, word: &str) -> EjaanError<()> {
+        unsafe {
+            // &str -> NSString
+            let ns_word = NSString::from_str(word);
+            if self.shared.hasLearnedWord(&ns_word) {
+                self.shared.unlearnWord(&ns_word);
+            }
+            Ok(())
+        }
+    }
+
+    fn set_language(&mut self, language: &str) -> EjaanError<bool> {
+        unsafe {
+            // &str -> NSString
+            let ns_language = NSString::from_str(language);
+            Ok(self.shared.setLanguage(&ns_language))
+        }
+    }
+
+    fn get_available_languages(&self) -> EjaanError<Vec<String>> {
+        unsafe {
+            let languages = self.shared.availableLanguages();
+            // Iterate over the NSArray and convert to Vec<String>
+            let counter = languages.count();
+            let mut result = Vec::with_capacity(counter);
+            for i in 0..counter {
+                let lang = languages.objectAtIndex(i);
+                autoreleasepool(|pool| {
+                    let lang_str = lang.to_str(pool);
+                    result.push(lang_str.to_string());
+                })
+            }
+
+            Ok(result)
+        }
+    }
+
+    fn check_word(&self, word: &str) -> EjaanError<bool> {
+        unsafe {
+            let ns_word = NSString::from_str(word);
+            let ranges = self.shared.checkSpellingOfString_startingAt(&ns_word, 0);
+            // If the range is empty, the word is spelled correctly
+            Ok(ranges.is_empty())
+        }
+    }
+
+    fn check_sentences(&self, sentence: &str) -> EjaanError<Vec<TokenWithSuggestions>> {
+        let tokenized = tokenize_sentence(sentence);
+        Ok(tokenized
+            .iter()
+            .filter_map(|token| {
+                if self.check_word(token.word()).expect("Failed to check word") {
+                    None // Word is spelled correctly, no need to collect
+                } else {
+                    // Word is misspelled, collect the range
+                    Some(TokenWithSuggestions::new(
+                        token.clone(),
+                        self.suggest(token.word()),
+                    ))
+                }
+            })
+            .collect())
+    }
+
+    fn get_language(&self) -> EjaanError<Option<String>> {
         unsafe {
             let language = self.shared.language();
             if language.is_empty() {
-                None
+                Ok(None) // No language set
             } else {
-                Some(language.to_string())
+                Ok(Some(language.to_string()))
             }
         }
     }

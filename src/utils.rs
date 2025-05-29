@@ -129,6 +129,8 @@ mod tests {
     #[test]
     #[cfg(target_os = "macos")]
     fn test_tokenize_sentence() {
+        use super::Token;
+
         let sentence = "Hello, world! This is a test.";
         let tokens = super::tokenize_sentence(sentence);
         println!("{:?}", tokens);
