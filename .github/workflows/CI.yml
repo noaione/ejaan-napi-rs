@@ -105,7 +105,7 @@ jobs:
           path: ${{ env.APP_NAME }}.*.node
           if-no-files-found: error
   test-macOS-windows-binding:
-    name: Test bindings on ${{ matrix.settings.target }} - node@20
+    name: Test bindings on ${{ matrix.settings.target }} - node@22
     needs:
       - build
     strategy:
@@ -132,9 +132,13 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: yarn
           architecture: ${{ matrix.settings.arch }}
+      - name: Setup node x86
+        if: matrix.settings.target == 'i686-pc-windows-msvc'
+        run: yarn config set supportedArchitectures.cpu "ia32"
+        shell: bash
       - name: Install dependencies
         run: yarn install
       - name: Download artifacts
