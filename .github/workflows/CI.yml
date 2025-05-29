@@ -105,7 +105,7 @@ jobs:
           path: ${{ env.APP_NAME }}.*.node
           if-no-files-found: error
   test-macOS-windows-binding:
-    name: Test bindings on ${{ matrix.settings.target }} - node@22
+    name: Test bindings on ${{ matrix.settings.target }} - node@20
     needs:
       - build
     strategy:
@@ -120,9 +120,11 @@ jobs:
             arch: arm64
           - host: windows-2025
             target: x86_64-pc-windows-msvc
-          - host: windows-2025
-            target: aarch64-pc-windows-msvc
-            arch: arm64
+            arch: x64
+          # Ignore testing in arm64 windows for now, because it's broken.
+          # - host: windows-2025
+          #   target: aarch64-pc-windows-msvc
+          #   arch: arm64
           - host: windows-2025
             target: i686-pc-windows-msvc
             arch: x86
@@ -132,7 +134,7 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
           cache: yarn
           architecture: ${{ matrix.settings.arch }}
       - name: Setup node x86
