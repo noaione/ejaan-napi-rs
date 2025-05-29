@@ -25,19 +25,19 @@ jobs:
       fail-fast: false
       matrix:
         settings:
-          - host: macos-latest
+          - host: macos-15
             target: x86_64-apple-darwin
             build: yarn build --target x86_64-apple-darwin
-          - host: macos-latest
+          - host: macos-15
             target: aarch64-apple-darwin
             build: yarn build --target aarch64-apple-darwin
-          - host: windows-latest
+          - host: windows-2025
             build: yarn build --target x86_64-pc-windows-msvc
             target: x86_64-pc-windows-msvc
-          - host: windows-latest
+          - host: windows-2025
             build: yarn build --target aarch64-pc-windows-msvc
             target: aarch64-pc-windows-msvc
-          - host: windows-latest
+          - host: windows-2025
             build: yarn build --target i686-pc-windows-msvc
             target: i686-pc-windows-msvc
     name: stable - ${{ matrix.settings.target }} - node@20
@@ -105,36 +105,34 @@ jobs:
           path: ${{ env.APP_NAME }}.*.node
           if-no-files-found: error
   test-macOS-windows-binding:
-    name: Test bindings on ${{ matrix.settings.target }} - node@${{ matrix.node }}
+    name: Test bindings on ${{ matrix.settings.target }} - node@20
     needs:
       - build
     strategy:
       fail-fast: false
       matrix:
         settings:
-          - host: macos-latest
+          - host: macos-15
             target: x86_64-apple-darwin
             arch: x64
-          - host: macos-latest
+          - host: macos-15
             target: aarch64-apple-darwin
             arch: arm64
-          - host: windows-latest
+          - host: windows-2025
             target: x86_64-pc-windows-msvc
-          - host: windows-latest
+          - host: windows-2025
             target: aarch64-pc-windows-msvc
             arch: arm64
-          - host: windows-latest
+          - host: windows-2025
             target: i686-pc-windows-msvc
             arch: x86
-        node:
-          - '20'
     runs-on: ${{ matrix.settings.host }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node }}
+          node-version: 20
           cache: yarn
           architecture: ${{ matrix.settings.arch }}
       - name: Install dependencies
@@ -153,7 +151,7 @@ jobs:
     name: Build universal macOS binary
     needs:
       - build
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - name: Setup node
