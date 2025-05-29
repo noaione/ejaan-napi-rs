@@ -1,3 +1,3 @@
-# `ejaan-rs-win32-x64-msvc`
+# `@noaione/ejaan-rs-win32-x64-msvc`
 
-This is the **x86_64-pc-windows-msvc** binary for `ejaan-rs`
+This is the **x86_64-pc-windows-msvc** binary for `@noaione/ejaan-rs`

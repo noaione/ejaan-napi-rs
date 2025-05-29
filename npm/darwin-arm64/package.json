@@ -1,6 +1,7 @@
 {
-  "name": "ejaan-rs-darwin-arm64",
+  "name": "@noaione/ejaan-rs-darwin-arm64",
   "version": "0.1.0",
+  "description": "Darwin/macOS arm64 native-binding for @noaione/ejaan-rs",
   "os": [
     "darwin"
   ],
@@ -11,8 +12,19 @@
   "files": [
     "ejaan-rs.darwin-arm64.node"
   ],
-  "license": "MIT",
+  "license": "MIT OR Apache-2.0",
   "engines": {
-    "node": ">= 10"
-  }
+    "node": ">=18.17.0"
+  },
+  "repository": "git@github.com:noaione/ejaan-napi-rs.git",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "keywords": [
+    "napi-rs",
+    "NAPI",
+    "N-API",
+    "spell-checker"
+  ]
 }

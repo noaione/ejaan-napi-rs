@@ -1,5 +1,5 @@
 {
-  "name": "ejaan-rs",
+  "name": "@noaione/ejaan-rs",
   "version": "0.1.0",
   "main": "index.js",
   "types": "index.d.ts",
@@ -7,6 +7,7 @@
     "name": "noaione",
     "email": "noaione@n4o.xyz"
   },
+  "description": "A Rust-based spell checker using Native system API for Node.js",
   "readme": "README.md",
   "napi": {
     "name": "ejaan-rs",
@@ -22,7 +23,17 @@
     }
   },
   "repository": "git@github.com:noaione/ejaan-napi-rs.git",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "license": "MIT OR Apache-2.0",
+  "keywords": [
+    "napi-rs",
+    "NAPI",
+    "N-API",
+    "spell-checker"
+  ],
   "devDependencies": {
     "@napi-rs/cli": "^2.18.4",
     "ava": "^6.0.1"
@@ -33,6 +44,10 @@
   "engines": {
     "node": ">=18.17.0"
   },
+  "files": [
+    "index.js",
+    "index.d.ts"
+  ],
   "scripts": {
     "artifacts": "napi artifacts",
     "build": "napi build --platform --release",

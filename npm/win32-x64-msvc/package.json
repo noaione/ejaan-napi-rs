@@ -1,6 +1,7 @@
 {
-  "name": "ejaan-rs-win32-x64-msvc",
+  "name": "@noaione/ejaan-rs-win32-x64-msvc",
   "version": "0.1.0",
+  "description": "Windows x64 native-binding for @noaione/ejaan-rs",
   "os": [
     "win32"
   ],
@@ -11,8 +12,19 @@
   "files": [
     "ejaan-rs.win32-x64-msvc.node"
   ],
-  "license": "MIT",
+  "license": "MIT OR Apache-2.0",
   "engines": {
-    "node": ">= 10"
-  }
+    "node": ">=18.17.0"
+  },
+  "repository": "git@github.com:noaione/ejaan-napi-rs.git",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "keywords": [
+    "napi-rs",
+    "NAPI",
+    "N-API",
+    "spell-checker"
+  ]
 }
