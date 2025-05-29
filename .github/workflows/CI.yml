@@ -127,7 +127,6 @@ jobs:
             target: i686-pc-windows-msvc
             arch: x86
         node:
-          - '18'
           - '20'
     runs-on: ${{ matrix.settings.host }}
     steps:
