@@ -203,9 +203,7 @@ impl SpellCheckerImpl for WindowsSpellChecker {
     }
 
     fn remove_word(&self, _: &str) -> EjaanError<()> {
-        Err(crate::utils::Error::new(
-            "`remove_word` is not implemented for WindowsSpellChecker",
-        ))
+        Ok(())
     }
 
     fn get_language(&self) -> EjaanError<Option<String>> {
