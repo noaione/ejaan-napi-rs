@@ -1,9 +1,10 @@
 {
     "[rust]": {
-        "editor.tabSize": 4
+        "editor.tabSize": 4,
+        "editor.formatOnSave": true
     },
     "[javascript]": {
-        "editor.tabSize": 2
+        "editor.tabSize": 2,
     },
     "rust-analyzer.procMacro.ignored": { "napi-derive": ["napi"] }
 }

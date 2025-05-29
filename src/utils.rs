@@ -4,7 +4,7 @@ use std::ops::RangeInclusive;
 pub struct Token {
     start: usize,
     end: usize,
-    word: String
+    word: String,
 }
 
 impl Token {
@@ -37,7 +37,11 @@ pub fn tokenize_sentence(sentence: &str) -> Vec<Token> {
     for (i, chars) in sentence.chars().enumerate() {
         if chars.is_whitespace() {
             if !current_word.is_empty() {
-                tokens.push(Token::new(i - current_word.len(), i - 1, current_word.clone()));
+                tokens.push(Token::new(
+                    i - current_word.len(),
+                    i - 1,
+                    current_word.clone(),
+                ));
                 current_word.clear();
             }
             continue;
@@ -45,7 +49,11 @@ pub fn tokenize_sentence(sentence: &str) -> Vec<Token> {
         current_word.push(chars);
     }
     if !current_word.is_empty() {
-        tokens.push(Token::new(sentence.len() - current_word.len(), sentence.len() - 1, current_word));
+        tokens.push(Token::new(
+            sentence.len() - current_word.len(),
+            sentence.len() - 1,
+            current_word,
+        ));
     }
     tokens
 }

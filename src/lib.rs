@@ -11,35 +11,35 @@ mod windows;
 /// The main trait for spell checking functionality.
 pub trait SpellCheckerImpl {
     /// Check if a word is spelled correctly.
-    /// 
+    ///
     /// # Arguments
     /// * `word` - The word to check.
-    /// 
+    ///
     /// # Returns
     /// A boolean indicating whether the word is spelled correctly.
     fn check_word(&self, word: &str) -> bool;
     /// Check if a sentence is spelled correctly.
-    /// 
+    ///
     /// # Arguments
     /// * `sentence` - The sentence to check.
-    /// 
+    ///
     /// # Returns
     /// A list of index positions where the words are misspelled.
     fn check_sentence(&self, sentence: &str) -> Vec<Token>;
     /// Suggest corrections for a misspelled word.
-    /// 
+    ///
     /// Can return an empty list if no suggestions are available.
     fn suggest(&self, word: &str) -> Vec<String>;
 
     /// Add a word to the spell checker.
     fn add_word(&self, word: &str) -> ();
     /// Remove a word from the spell checker.
-    /// 
+    ///
     /// This will silently fail if the word is not found.
     fn remove_word(&self, word: &str) -> ();
 
     /// Batch add words to the spell checker.
-    /// 
+    ///
     /// # Arguments
     /// * `words` - A list of words to add.
     fn add_words(&self, words: Vec<String>) -> () {
@@ -49,7 +49,7 @@ pub trait SpellCheckerImpl {
     }
 
     /// Batch remove words from the spell checker.
-    /// 
+    ///
     /// # Arguments
     /// * `words` - A list of words to remove.
     fn remove_words(&self, words: Vec<String>) -> () {
@@ -104,13 +104,16 @@ impl SpellChecker {
     #[napi]
     pub fn set_language(&self, language: String) -> napi::Result<()> {
         if !self.inner.set_language(&language) {
-            return Err(napi::Error::from_reason(format!("Failed to set language: {}", language)));
+            return Err(napi::Error::from_reason(format!(
+                "Failed to set language: {}",
+                language
+            )));
         }
         Ok(())
     }
 
     /// Get the list of available languages for the spell checker.
-    /// 
+    ///
     /// # Returns
     /// A list of available languages.
     #[napi]
@@ -119,7 +122,7 @@ impl SpellChecker {
     }
 
     /// Check if a word is spelled correctly.
-    /// 
+    ///
     /// # Arguments
     /// * `word` - The word to check.
     #[napi]
@@ -128,7 +131,7 @@ impl SpellChecker {
     }
 
     /// Suggest corrections for a misspelled word.
-    /// 
+    ///
     /// # Arguments
     /// * `word` - The word to suggest corrections for.
     pub fn suggest(&self, word: String) -> napi::Result<Vec<String>> {
@@ -136,9 +139,9 @@ impl SpellChecker {
     }
 
     /// Check if a word is spelled correctly.
-    /// 
+    ///
     /// This will also return a list of suggestions if the word is misspelled.
-    /// 
+    ///
     /// # Arguments
     /// * `sentences` - The sentence to check.
     #[napi]
@@ -147,10 +150,16 @@ impl SpellChecker {
         let tokens = self.inner.check_sentence(&sentences);
 
         for token in tokens {
-            let suggested= self.inner.suggest(token.word());
+            let suggested = self.inner.suggest(token.word());
             suggestions.push(JsSuggestion {
-                start: token.start().try_into().map_err(|_| napi::Error::from_reason("Invalid start index"))?,
-                end: token.end().try_into().map_err(|_| napi::Error::from_reason("Invalid end index"))?,
+                start: token
+                    .start()
+                    .try_into()
+                    .map_err(|_| napi::Error::from_reason("Invalid start index"))?,
+                end: token
+                    .end()
+                    .try_into()
+                    .map_err(|_| napi::Error::from_reason("Invalid end index"))?,
                 word: token.word().to_string(),
                 suggestions: suggested,
             })
@@ -160,7 +169,7 @@ impl SpellChecker {
     }
 
     /// Add a word to the spell checker.
-    /// 
+    ///
     /// # Arguments
     /// * `words` - The word to add.
     #[napi]
@@ -170,7 +179,7 @@ impl SpellChecker {
     }
 
     /// Remove a word from the spell checker.
-    /// 
+    ///
     /// # Arguments
     /// * `words` - The word to remove.
     #[napi]

@@ -1,19 +1,23 @@
 //! Apple-specific implementation of the spell checker.
 
-use objc2::rc::{autoreleasepool, Retained};
+use objc2::rc::{Retained, autoreleasepool};
+use objc2_app_kit::NSSpellChecker;
 use objc2_foundation::{NSRange, NSString};
 
-use crate::{utils::{self, Token}, SpellCheckerImpl};
+use crate::{
+    SpellCheckerImpl,
+    utils::{Token, tokenize_sentence},
+};
 
 pub struct AppleSpellChecker {
-    shared: Retained<objc2_app_kit::NSSpellChecker>,
+    shared: Retained<NSSpellChecker>,
 }
 
 impl AppleSpellChecker {
     /// Creates a shared instance of the Apple spell checker.
     pub fn new() -> Self {
         unsafe {
-            let shared = objc2_app_kit::NSSpellChecker::sharedSpellChecker();
+            let shared = NSSpellChecker::sharedSpellChecker();
             // By default, we guess the language automatically.
             shared.setAutomaticallyIdentifiesLanguages(true);
             Self { shared }
@@ -76,22 +80,29 @@ impl SpellCheckerImpl for AppleSpellChecker {
     }
 
     fn check_sentence(&self, sentence: &str) -> Vec<Token> {
-        let tokenized = utils::tokenize_sentence(sentence);
-        tokenized.iter().filter_map(|token| {
-            if self.check_word(token.word()) {
-                None // Word is spelled correctly, no need to collect
-            } else {
-                // Word is misspelled, collect the range
-                Some(token.clone())
-            }
-        }).collect()
+        let tokenized = tokenize_sentence(sentence);
+        tokenized
+            .iter()
+            .filter_map(|token| {
+                if self.check_word(token.word()) {
+                    None // Word is spelled correctly, no need to collect
+                } else {
+                    // Word is misspelled, collect the range
+                    Some(token.clone())
+                }
+            })
+            .collect()
     }
 
     fn suggest(&self, word: &str) -> Vec<String> {
         unsafe {
             let ns_word = NSString::from_str(word);
             let range = NSRange::new(0, ns_word.len());
-            let suggestions = self.shared.guessesForWordRange_inString_language_inSpellDocumentWithTag(range, &ns_word, None, 0);
+            let suggestions = self
+                .shared
+                .guessesForWordRange_inString_language_inSpellDocumentWithTag(
+                    range, &ns_word, None, 0,
+                );
             if let Some(suggestions) = suggestions {
                 // Convert NSArray to Vec<String>
                 let counter = suggestions.count();
