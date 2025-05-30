@@ -8,12 +8,11 @@ A simple Rust + Node.js library for checking spelling using Native system librar
 ## API Used
 - Windows: [ISpellChecker](https://learn.microsoft.com/en-us/windows/win32/api/spellcheck/nn-spellcheck-ispellchecker)
 - macOS: [NSSpellChecker](https://developer.apple.com/documentation/appkit/nsspellchecker?language=objc)
-- Linux: Unavailable
+- Linux: Not supported
 
 ## Requirements
 - **Windows**: Windows 10 or later
 - **macOS**: macOS 10.15 (Catalina) or later
-- **Linux**: Not supported
 - **Node.js**: v18.17.0+
 - **Rust**: v1.85.0+ (for building from source)
 
