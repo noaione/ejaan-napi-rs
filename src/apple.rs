@@ -2,11 +2,14 @@
 
 use objc2::rc::{Retained, autoreleasepool};
 use objc2_app_kit::NSSpellChecker;
+use objc2_core_foundation::{
+    CFRange, CFString, CFStringTokenizer, CFStringTokenizerTokenType, kCFStringTokenizerUnitWord,
+};
 use objc2_foundation::{NSRange, NSString};
 
 use crate::{
     SpellCheckerImpl,
-    utils::{EjaanError, TokenWithSuggestions, tokenize_sentence},
+    utils::{EjaanError, Token, TokenWithSuggestions},
 };
 
 pub struct AppleSpellChecker {
@@ -109,10 +112,11 @@ impl SpellCheckerImpl for AppleSpellChecker {
     }
 
     fn check_sentences(&self, sentence: &str) -> EjaanError<Vec<TokenWithSuggestions>> {
-        let tokenized = tokenize_sentence(sentence);
+        let tokenized = tokenize_sentence(sentence)?;
         Ok(tokenized
             .iter()
             .filter_map(|token| {
+                // Guarantee: This will rarely fails
                 if self.check_word(token.word()).expect("Failed to check word") {
                     None // Word is spelled correctly, no need to collect
                 } else {
@@ -135,5 +139,161 @@ impl SpellCheckerImpl for AppleSpellChecker {
                 Ok(Some(language.to_string()))
             }
         }
+    }
+}
+
+fn tokenize_sentence(sentence: &str) -> EjaanError<Vec<Token>> {
+    unsafe {
+        let mut tokens = Vec::new();
+        let cf_string = CFString::from_str(sentence);
+        let tokenizer = CFStringTokenizer::new(
+            None,
+            Some(&cf_string),
+            CFRange::new(0, cf_string.length()),
+            kCFStringTokenizerUnitWord,
+            None,
+        )
+        .ok_or(crate::utils::Error::new("Failed to create tokenizer"))?;
+        // UTF-8 * 2 => UTF-16 compat
+        let const_len = cf_string.length() as usize * 2;
+
+        loop {
+            let next_token = tokenizer.advance_to_next_token();
+
+            if next_token == CFStringTokenizerTokenType::None {
+                break; // No more tokens
+            };
+
+            let range_tokens = tokenizer.current_token_range();
+            // Buffer to hold sub-token characters
+            let mut buffers = vec![0u16; const_len];
+            cf_string.characters(range_tokens, buffers.as_mut_ptr());
+
+            // Trim zero NULL characters then convert to a string slice
+            let sub_token_str = String::from_utf16_lossy(&buffers)
+                .trim_end_matches('\0')
+                .to_string();
+
+            let st_index = range_tokens.location as usize;
+            let end_index = st_index + range_tokens.length as usize;
+            tokens.push(Token::new(st_index, end_index, sub_token_str));
+        }
+
+        Ok(tokens)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_tokenize_sentence_cj() {
+        let sentence = "彼がその本を読んだ時、彼はその内容に深く感動した。";
+        let tokens = tokenize_sentence(sentence).expect("Failed to tokenize sentence");
+        assert!(
+            !tokens.is_empty(),
+            "Tokenization should not return empty vector"
+        );
+        assert_eq!(
+            tokens.len(),
+            17,
+            "Expected 17 tokens for the given sentence"
+        );
+    }
+
+    #[test]
+    fn test_tokenize_standard() {
+        let sentence = "This is a test sentence.";
+        let tokens = tokenize_sentence(sentence).expect("Failed to tokenize sentence");
+        assert!(
+            !tokens.is_empty(),
+            "Tokenization should not return empty vector"
+        );
+        assert_eq!(tokens.len(), 5, "Expected 5 tokens for the given sentence");
+        assert_eq!(tokens[0].word(), "This", "First token should be 'This'");
+        assert_eq!(
+            tokens[4].word(),
+            "sentence",
+            "Last token should be 'sentence'"
+        );
+    }
+
+    #[test]
+    fn test_mixed_sentences() {
+        let sentence = "彼は本を読んで、I love programming.";
+        let tokens = tokenize_sentence(sentence).expect("Failed to tokenize sentence");
+        assert!(
+            !tokens.is_empty(),
+            "Tokenization should not return empty vector"
+        );
+        assert_eq!(tokens.len(), 9, "Expected 8 tokens for the mixed sentence");
+        assert_eq!(tokens[0].word(), "彼", "First token should be '彼'");
+        assert_eq!(
+            tokens[8].word(),
+            "programming",
+            "Last token should be 'programming'"
+        );
+    }
+
+    #[test]
+    fn test_simple_spellcheck() {
+        let spell_checker = AppleSpellChecker::new();
+        let word = "test";
+        let is_correct = spell_checker
+            .check_word(word)
+            .expect("Failed to check word");
+        assert!(
+            is_correct,
+            "The word '{}' should be spelled correctly",
+            word
+        );
+    }
+
+    #[test]
+    fn test_simple_sentences() {
+        let spell_checker = AppleSpellChecker::new();
+        let sentence = "This is a test sentence.";
+        let tokens = spell_checker
+            .check_sentences(sentence)
+            .expect("Failed to check sentences");
+
+        assert!(
+            !tokens.is_empty(),
+            "Spell checking should not return empty vector"
+        );
+        assert_eq!(
+            tokens.len(),
+            0,
+            "Expected no misspelled words in the sentence"
+        );
+    }
+
+    #[test]
+    fn test_simple_sentences_with_typos() {
+        let spell_checker = AppleSpellChecker::new();
+        let sentence = "This is a tset sentence.";
+        let tokens = spell_checker
+            .check_sentences(sentence)
+            .expect("Failed to check sentences");
+
+        assert!(
+            !tokens.is_empty(),
+            "Spell checking should return misspelled words"
+        );
+        assert_eq!(
+            tokens.len(),
+            1,
+            "Expected one misspelled word in the sentence"
+        );
+        assert_eq!(
+            tokens[0].token().word(),
+            "tset",
+            "Expected the misspelled word to be 'tset'"
+        );
+        assert!(
+            !tokens[0].suggestions().is_empty(),
+            "Expected suggestions for the misspelled word"
+        );
     }
 }
