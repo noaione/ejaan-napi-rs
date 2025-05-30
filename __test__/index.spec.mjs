@@ -13,7 +13,6 @@ test('has invalid', (t) => {
   const spellchecker = new SpellChecker();
 
   const results = spellchecker.checkAndSuggest('This is a invalid snetences.');
-  console.log(results);
 
   // Make sure it has single result
   t.is(results.length, 1);

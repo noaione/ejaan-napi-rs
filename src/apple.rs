@@ -175,7 +175,7 @@ fn tokenize_sentence(sentence: &str) -> EjaanError<Vec<Token>> {
                 .to_string();
 
             let st_index = range_tokens.location as usize;
-            let end_index = st_index + range_tokens.length as usize;
+            let end_index = (st_index + range_tokens.length as usize).saturating_sub(1);
             tokens.push(Token::new(st_index, end_index, sub_token_str));
         }
 

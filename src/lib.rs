@@ -89,6 +89,8 @@ pub struct JsSuggestion {
     /// The start index of the misspelled word in the original text.
     pub start: u32,
     /// The end index of the misspelled word in the original text.
+    ///
+    /// This is inclusive, meaning the end index is the last character of the word.
     pub end: u32,
     /// The misspelled word.
     pub word: String,
