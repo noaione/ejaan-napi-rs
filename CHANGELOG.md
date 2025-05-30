@@ -10,6 +10,9 @@ Nothing yet!
 ### Improvements
 - Replace naive tokenizer in macOS with [`CFStringTokenizer`](https://developer.apple.com/documentation/corefoundation/cfstringtokenizercreate(_:_:_:_:_:)?language=objc) for better accurary.
 
+### Docs
+- Better explain some stuff in the typings
+
 ## [0.1.0] 2025-05-30
 This is the first release of `@noaione/ejaan-rs` package.
 - Initial release with basic functionality

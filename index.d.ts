@@ -15,7 +15,11 @@
 export interface Suggestion {
   /** The start index of the misspelled word in the original text. */
   start: number
-  /** The end index of the misspelled word in the original text. */
+  /**
+   * The end index of the misspelled word in the original text.
+   *
+   * This is inclusive, meaning the end index is the last character of the word.
+   */
   end: number
   /** The misspelled word. */
   word: string
