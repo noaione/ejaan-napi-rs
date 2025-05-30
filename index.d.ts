@@ -32,7 +32,15 @@ export interface Suggestion {
  * @class SpellChecker
  */
 export declare class SpellChecker {
-  /** Create a new instance of the spell checker. */
+  /**
+   * The main Spell checker class.
+   *
+   * This automatically determine the appropriate spell checker implementation based on the platform.
+   *
+   * As a sidenote, all API returned can throw an error, especially on Windows.
+   *
+   * @returns {void}
+   */
   constructor()
   /**
    * Get the current language of the spell checker.

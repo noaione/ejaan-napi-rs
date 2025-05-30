@@ -98,7 +98,13 @@ pub struct JsSuggestion {
 
 #[napi]
 impl SpellChecker {
-    /// Create a new instance of the spell checker.
+    /// The main Spell checker class.
+    ///
+    /// This automatically determine the appropriate spell checker implementation based on the platform.
+    ///
+    /// As a sidenote, all API returned can throw an error, especially on Windows.
+    ///
+    /// @returns {void}
     #[napi(constructor)]
     pub fn new() -> napi::Result<Self> {
         #[cfg(target_os = "macos")]
