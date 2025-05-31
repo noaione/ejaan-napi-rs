@@ -1,6 +1,6 @@
 {
   "name": "@noaione/ejaan-rs",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "main": "index.js",
   "types": "index.d.ts",
   "author": {
@@ -23,7 +23,10 @@
       ]
     }
   },
-  "repository": "git@github.com:noaione/ejaan-napi-rs.git",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/noaione/ejaan-napi-rs.git"
+  },
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"

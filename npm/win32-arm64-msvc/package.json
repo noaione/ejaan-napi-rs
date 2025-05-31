@@ -1,6 +1,6 @@
 {
   "name": "@noaione/ejaan-rs-win32-arm64-msvc",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Windows arm64 native-binding for @noaione/ejaan-rs",
   "os": [
     "win32"
@@ -16,7 +16,10 @@
   "engines": {
     "node": ">=20.3.0"
   },
-  "repository": "git@github.com:noaione/ejaan-napi-rs.git",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/noaione/ejaan-napi-rs.git"
+  },
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"

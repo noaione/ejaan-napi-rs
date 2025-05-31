@@ -3,6 +3,10 @@
 The following file contains all the changes made in `@noaione/ejaan-rs` package.
 
 ## Unreleased
+
+Nothing yet!
+
+## [0.1.2] 2025-05-31
 ### Improvements
 - Use [`checkString:range:types:options:inSpellDocumentWithTag:orthography:wordCount:`](https://developer.apple.com/documentation/appkit/nsspellchecker/check(_:range:types:options:inspelldocumentwithtag:orthography:wordcount:)?language=objc) for spell-checking sentences
 - Fix Windows substring extraction issues when it get non-ASCII characters
