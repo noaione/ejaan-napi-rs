@@ -85,7 +85,7 @@ impl WindowsSpellChecker {
             let range = start_index as usize..(start_index + length) as usize;
             let substring = wide_word
                 .get(range.clone())
-                .ok_or(crate::utils::Error::new(&format!(
+                .ok_or(crate::utils::Error::new(format!(
                     "Failed to get substring for range: {:?}",
                     range
                 )))?;
@@ -120,7 +120,7 @@ impl WindowsSpellChecker {
 
                         let suggest_str = unsafe {
                             suggestion[0].to_string().map_err(|e| {
-                                crate::utils::Error::new(&format!(
+                                crate::utils::Error::new(format!(
                                     "Failed to convert suggestion PWSTR to string: {}",
                                     e
                                 ))
@@ -138,7 +138,7 @@ impl WindowsSpellChecker {
                     // PWSTR -> string
                     let repl_str = unsafe {
                         repl.to_string().map_err(|e| {
-                            crate::utils::Error::new(&format!(
+                            crate::utils::Error::new(format!(
                                 "Failed to convert replacement PWSTR to string: {}",
                                 e
                             ))
@@ -171,7 +171,7 @@ impl SpellCheckerImpl for WindowsSpellChecker {
                 }
 
                 let lang_str = suggestion[0].to_string().map_err(|e| {
-                    crate::utils::Error::new(&format!(
+                    crate::utils::Error::new(format!(
                         "Failed to convert language PWSTR to string: {}",
                         e
                     ))

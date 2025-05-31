@@ -86,7 +86,7 @@ impl From<Error> for napi::Error {
 #[cfg(target_os = "windows")]
 impl From<windows::core::Error> for Error {
     fn from(err: windows::core::Error) -> Self {
-        Error::new(&format!(
+        Error::new(format!(
             "Windows error: {} (code: {})",
             err.message(),
             err.code().0
