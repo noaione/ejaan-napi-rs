@@ -154,8 +154,8 @@ impl SpellCheckerImpl for AppleSpellChecker {
                     .trim_end_matches('\0')
                     .to_string();
 
-                let st_index = ranges.location as usize;
-                let end_index = (st_index + ranges.length as usize).saturating_sub(1);
+                let st_index = ranges.location;
+                let end_index = (st_index + ranges.length).saturating_sub(1);
                 let suggestions = self.suggest(&text_data);
                 misspelling.push(TokenWithSuggestions::new(
                     Token::new(st_index, end_index, text_data),
