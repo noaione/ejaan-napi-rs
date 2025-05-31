@@ -25,3 +25,30 @@ test('has invalid', (t) => {
   
   t.true(result.suggestions.length > 0, 'Suggestions should not be empty');
 });
+
+test('can handle utf-8 characters just fine', (t) => {
+  const spellchecker = new SpellChecker();
+
+  try {
+    // Make sure it has zero result and it didn't fails
+    const results = spellchecker.checkAndSuggest('“As I said, this should work properly!”');
+
+    t.is(results.length, 0, 'No misspelled words should be found');
+  } catch (error) {
+    t.fail(`SpellChecker failed with error: ${error.message}`);
+  }
+
+  // Now with error
+  try {
+    const results = spellchecker.checkAndSuggest('“As I said, this should work properly!” with a mistake snetences.');
+
+    t.is(results.length, 1, 'One misspelled word should be found');
+    const result = results[0];
+    t.is(result.word, 'snetences');
+    t.is(result.start, 55);
+    t.is(result.end, 63);
+    t.true(result.suggestions.length > 0, 'Suggestions should not be empty');
+  } catch (error) {
+    t.fail(`SpellChecker failed with error: ${error.message}`);
+  }
+})

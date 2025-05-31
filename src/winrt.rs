@@ -83,10 +83,17 @@ impl WindowsSpellChecker {
             let length = unsafe { err.Length()? };
 
             let range = start_index as usize..(start_index + length) as usize;
-            let substring = word.get(range).ok_or_else(|| {
-                crate::utils::Error::new("Failed to get substring for spell check token")
-            })?;
+            let substring = wide_word
+                .get(range.clone())
+                .ok_or(crate::utils::Error::new(&format!(
+                    "Failed to get substring for range: {:?}",
+                    range
+                )))?;
             let action = unsafe { err.CorrectiveAction()? };
+
+            let substring = String::from_utf16_lossy(substring)
+                .trim_end_matches('\0')
+                .to_string();
 
             let token = Token::new(
                 start_index as usize,
@@ -230,13 +237,90 @@ impl SpellCheckerImpl for WindowsSpellChecker {
 
 #[cfg(test)]
 mod tests {
-    use crate::{SpellCheckerImpl, winrt::WindowsSpellChecker};
+    use super::*;
 
     #[test]
-    fn test_ignored_text() {
-        let dict = WindowsSpellChecker::new().unwrap();
-        dict.add_word("broekn").unwrap();
-        let results = dict.check_sentences("is this broekn for you?").unwrap();
-        println!("{:?}", results);
+    fn test_simple_spellcheck() {
+        let spell_checker = WindowsSpellChecker::new().unwrap();
+        let word = "test";
+        let is_correct = spell_checker
+            .check_word(word)
+            .expect("Failed to check word");
+        assert!(
+            is_correct,
+            "The word '{}' should be spelled correctly",
+            word
+        );
+    }
+
+    #[test]
+    fn test_simple_sentences() {
+        let spell_checker = WindowsSpellChecker::new().unwrap();
+        let sentence = "This is a test sentence.";
+        let tokens = spell_checker
+            .check_sentences(sentence)
+            .expect("Failed to check sentences");
+
+        println!("Tokens: {:?}", tokens);
+
+        assert_eq!(
+            tokens.len(),
+            0,
+            "Expected no misspelled words in the sentence"
+        );
+    }
+
+    #[test]
+    fn test_simple_sentences_with_typos() {
+        let spell_checker = WindowsSpellChecker::new().unwrap();
+        let sentence = "This is a tset sentence.";
+        let tokens = spell_checker
+            .check_sentences(sentence)
+            .expect("Failed to check sentences");
+
+        assert!(
+            !tokens.is_empty(),
+            "Spell checking should return misspelled words"
+        );
+        assert_eq!(
+            tokens.len(),
+            1,
+            "Expected one misspelled word in the sentence"
+        );
+        assert_eq!(
+            tokens[0].token().word(),
+            "tset",
+            "Expected the misspelled word to be 'tset'"
+        );
+        assert!(
+            !tokens[0].suggestions().is_empty(),
+            "Expected suggestions for the misspelled word"
+        );
+    }
+
+    #[test]
+    fn test_utf_8_characters() {
+        let spell_checker = WindowsSpellChecker::new().unwrap();
+        let word = "“Test...”";
+
+        let tokens = spell_checker
+            .check_sentences(word)
+            .expect("Failed to check sentences");
+
+        assert_eq!(
+            tokens.len(),
+            0,
+            "Expected no misspelled words in the UTF-8 characters sentence"
+        );
+
+        let word = "“Tset...”";
+        let tokens = spell_checker
+            .check_sentences(word)
+            .expect("Failed to check sentences");
+
+        assert!(
+            !tokens.is_empty(),
+            "Spell checking should return misspelled words for UTF-8 characters"
+        );
     }
 }
