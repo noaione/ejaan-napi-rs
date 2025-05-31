@@ -3,8 +3,8 @@
 The following file contains all the changes made in `@noaione/ejaan-rs` package.
 
 ## Unreleased
-
-Nothing yet!
+### Improvements
+- Use [`checkString:range:types:options:inSpellDocumentWithTag:orthography:wordCount:`](https://developer.apple.com/documentation/appkit/nsspellchecker/check(_:range:types:options:inspelldocumentwithtag:orthography:wordcount:)?language=objc) for spell-checking sentences
 
 ## [0.1.1] 2025-05-30
 ### Improvements

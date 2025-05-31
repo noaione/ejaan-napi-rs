@@ -1,11 +1,10 @@
 //! Apple-specific implementation of the spell checker.
 
+use std::ptr::NonNull;
+
 use objc2::rc::{Retained, autoreleasepool};
 use objc2_app_kit::NSSpellChecker;
-use objc2_core_foundation::{
-    CFRange, CFString, CFStringTokenizer, CFStringTokenizerTokenType, kCFStringTokenizerUnitWord,
-};
-use objc2_foundation::{NSRange, NSString};
+use objc2_foundation::{NSRange, NSString, NSTextCheckingType};
 
 use crate::{
     SpellCheckerImpl,
@@ -27,14 +26,18 @@ impl AppleSpellChecker {
         }
     }
 
-    fn suggest(&self, word: &str) -> Vec<String> {
+    fn suggest<S: AsRef<str>>(&self, word: S) -> Vec<String> {
         unsafe {
-            let ns_word = NSString::from_str(word);
+            let ns_word = NSString::from_str(word.as_ref());
             let range = NSRange::new(0, ns_word.len());
+            let language = self.shared.language();
             let suggestions = self
                 .shared
                 .guessesForWordRange_inString_language_inSpellDocumentWithTag(
-                    range, &ns_word, None, 0,
+                    range,
+                    &ns_word,
+                    Some(&language),
+                    0,
                 );
             if let Some(suggestions) = suggestions {
                 // Convert NSArray to Vec<String>
@@ -112,22 +115,58 @@ impl SpellCheckerImpl for AppleSpellChecker {
     }
 
     fn check_sentences(&self, sentence: &str) -> EjaanError<Vec<TokenWithSuggestions>> {
-        let tokenized = tokenize_sentence(sentence)?;
-        Ok(tokenized
-            .iter()
-            .filter_map(|token| {
-                // Guarantee: This will rarely fails
-                if self.check_word(token.word()).expect("Failed to check word") {
-                    None // Word is spelled correctly, no need to collect
-                } else {
-                    // Word is misspelled, collect the range
-                    Some(TokenWithSuggestions::new(
-                        token.clone(),
-                        self.suggest(token.word()),
-                    ))
+        let ns_string = NSString::from_str(sentence);
+
+        unsafe {
+            let mut numbers: isize = 0;
+            let mispellings = self
+                .shared
+                .checkString_range_types_options_inSpellDocumentWithTag_orthography_wordCount(
+                    &ns_string,
+                    NSRange::new(0, ns_string.length()),
+                    NSTextCheckingType::Spelling.0,
+                    None,
+                    0,
+                    None,
+                    &mut numbers,
+                );
+
+            let mut misspelling =
+                Vec::with_capacity(numbers.try_into().unwrap_or(ns_string.length()));
+            for i in 0..mispellings.count() {
+                let result = mispellings.objectAtIndex(i);
+                let ranges = result.range();
+                if ranges.is_empty() {
+                    // In case the range is empty, skip this result
+                    continue;
                 }
-            })
-            .collect())
+
+                let buffer_size = ranges.length.saturating_mul(2);
+                let mut buffers = vec![0u16; buffer_size];
+                ns_string.getCharacters_range(
+                    NonNull::new(buffers.as_mut_ptr()).ok_or(crate::utils::Error::new(format!(
+                        "Failed to initialize buffer for misspelled word at range: {:#?}",
+                        ranges
+                    )))?,
+                    ranges,
+                );
+                let text_data = String::from_utf16_lossy(&buffers)
+                    .trim_end_matches('\0')
+                    .to_string();
+
+                let st_index = ranges.location as usize;
+                let end_index = (st_index + ranges.length as usize).saturating_sub(1);
+                let suggestions = self.suggest(&text_data);
+                misspelling.push(TokenWithSuggestions::new(
+                    Token::new(st_index, end_index, text_data),
+                    suggestions,
+                ));
+            }
+
+            // Trim the size of capacity until the actual length
+            misspelling.shrink_to_fit();
+            Ok(misspelling)
+        }
     }
 
     fn get_language(&self) -> EjaanError<Option<String>> {
@@ -142,99 +181,9 @@ impl SpellCheckerImpl for AppleSpellChecker {
     }
 }
 
-fn tokenize_sentence(sentence: &str) -> EjaanError<Vec<Token>> {
-    unsafe {
-        let mut tokens = Vec::new();
-        let cf_string = CFString::from_str(sentence);
-        let tokenizer = CFStringTokenizer::new(
-            None,
-            Some(&cf_string),
-            CFRange::new(0, cf_string.length()),
-            kCFStringTokenizerUnitWord,
-            None,
-        )
-        .ok_or(crate::utils::Error::new("Failed to create tokenizer"))?;
-        // UTF-8 * 2 => UTF-16 compat
-        let const_len = cf_string.length() as usize * 2;
-
-        loop {
-            let next_token = tokenizer.advance_to_next_token();
-
-            if next_token == CFStringTokenizerTokenType::None {
-                break; // No more tokens
-            };
-
-            let range_tokens = tokenizer.current_token_range();
-            // Buffer to hold sub-token characters
-            let mut buffers = vec![0u16; const_len];
-            cf_string.characters(range_tokens, buffers.as_mut_ptr());
-
-            // Trim zero NULL characters then convert to a string slice
-            let sub_token_str = String::from_utf16_lossy(&buffers)
-                .trim_end_matches('\0')
-                .to_string();
-
-            let st_index = range_tokens.location as usize;
-            let end_index = (st_index + range_tokens.length as usize).saturating_sub(1);
-            tokens.push(Token::new(st_index, end_index, sub_token_str));
-        }
-
-        Ok(tokens)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_tokenize_sentence_cj() {
-        let sentence = "彼がその本を読んだ時、彼はその内容に深く感動した。";
-        let tokens = tokenize_sentence(sentence).expect("Failed to tokenize sentence");
-        assert!(
-            !tokens.is_empty(),
-            "Tokenization should not return empty vector"
-        );
-        assert_eq!(
-            tokens.len(),
-            17,
-            "Expected 17 tokens for the given sentence"
-        );
-    }
-
-    #[test]
-    fn test_tokenize_standard() {
-        let sentence = "This is a test sentence.";
-        let tokens = tokenize_sentence(sentence).expect("Failed to tokenize sentence");
-        assert!(
-            !tokens.is_empty(),
-            "Tokenization should not return empty vector"
-        );
-        assert_eq!(tokens.len(), 5, "Expected 5 tokens for the given sentence");
-        assert_eq!(tokens[0].word(), "This", "First token should be 'This'");
-        assert_eq!(
-            tokens[4].word(),
-            "sentence",
-            "Last token should be 'sentence'"
-        );
-    }
-
-    #[test]
-    fn test_mixed_sentences() {
-        let sentence = "彼は本を読んで、I love programming.";
-        let tokens = tokenize_sentence(sentence).expect("Failed to tokenize sentence");
-        assert!(
-            !tokens.is_empty(),
-            "Tokenization should not return empty vector"
-        );
-        assert_eq!(tokens.len(), 9, "Expected 8 tokens for the mixed sentence");
-        assert_eq!(tokens[0].word(), "彼", "First token should be '彼'");
-        assert_eq!(
-            tokens[8].word(),
-            "programming",
-            "Last token should be 'programming'"
-        );
-    }
 
     #[test]
     fn test_simple_spellcheck() {
@@ -258,10 +207,8 @@ mod tests {
             .check_sentences(sentence)
             .expect("Failed to check sentences");
 
-        assert!(
-            !tokens.is_empty(),
-            "Spell checking should not return empty vector"
-        );
+        println!("Tokens: {:?}", tokens);
+
         assert_eq!(
             tokens.len(),
             0,

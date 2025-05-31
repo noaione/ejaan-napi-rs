@@ -66,9 +66,9 @@ pub struct Error {
 }
 
 impl Error {
-    pub fn new(message: &str) -> Self {
+    pub fn new<T: Into<String>>(message: T) -> Self {
         Error {
-            message: message.to_string(),
+            message: message.into(),
         }
     }
 
@@ -93,5 +93,3 @@ impl From<windows::core::Error> for Error {
         ))
     }
 }
-
-
