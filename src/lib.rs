@@ -4,6 +4,7 @@ use crate::utils::{EjaanError, TokenWithSuggestions};
 
 #[cfg(target_os = "macos")]
 mod apple;
+mod stubs;
 mod utils;
 #[cfg(target_os = "windows")]
 mod winrt;
@@ -118,6 +119,8 @@ impl SpellChecker {
                 e.message()
             ))
         })?;
+        #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+        let inner = stubs::StubSpellChecker::new();
 
         Ok(Self {
             inner: Box::new(inner),

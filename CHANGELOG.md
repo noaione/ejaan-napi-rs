@@ -5,6 +5,7 @@ The following file contains all the changes made in `@noaione/ejaan-rs` package.
 ## Unreleased
 ### Refactor
 - Use `unsafe` block only when necessary.
+- Create a stubs Spell Checker for unsupported platforms
 
 ## [0.1.2] 2025-05-31
 ### Improvements

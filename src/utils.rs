@@ -75,6 +75,20 @@ impl Error {
     pub fn message(&self) -> &str {
         &self.message
     }
+
+    pub(crate) fn unimplemented() -> Self {
+        let triples = format!(
+            "{}-{}-{}",
+            std::env::consts::OS,
+            std::env::consts::ARCH,
+            std::env::consts::FAMILY
+        );
+
+        Error::new(format!(
+            "Function is not implemented for this platform: {}",
+            triples
+        ))
+    }
 }
 
 impl From<Error> for napi::Error {
