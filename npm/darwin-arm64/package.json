@@ -1,6 +1,6 @@
 {
   "name": "@noaione/ejaan-rs-darwin-arm64",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Darwin/macOS arm64 native-binding for @noaione/ejaan-rs",
   "os": [
     "darwin"

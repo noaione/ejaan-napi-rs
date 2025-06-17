@@ -1,6 +1,6 @@
 {
   "name": "@noaione/ejaan-rs-win32-ia32-msvc",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Windows ia32 native-binding for @noaione/ejaan-rs",
   "os": [
     "win32"

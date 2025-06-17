@@ -3,6 +3,10 @@
 The following file contains all the changes made in `@noaione/ejaan-rs` package.
 
 ## Unreleased
+
+Nothing yet!
+
+## [0.2.0] 2025-06-17
 ### Breaking Changes
 - Drop support for Windows ARM builds (for now).
 
@@ -16,7 +20,7 @@ The following file contains all the changes made in `@noaione/ejaan-rs` package.
 
 ### Build
 - Test Rust code in CI
-- Bump internal dependencies to the latest versions
+- Bump dependencies to the latest versions
 
 ## [0.1.2] 2025-05-31
 ### Improvements
