@@ -198,8 +198,6 @@ mod tests {
             .check_sentences(sentence)
             .expect("Failed to check sentences");
 
-        println!("Tokens: {:?}", tokens);
-
         assert_eq!(
             tokens.len(),
             0,
