@@ -182,7 +182,7 @@ impl SpellChecker {
 
     /// Add a single word to the spell checker.
     ///
-    /// ## Implementation Note
+    /// ### Implementation Note
     /// On Windows, this will add the word to the IGNORE list instead of the dictionary.
     /// This is done to avoid adding the word permanently to the dictionary,
     ///
@@ -196,7 +196,7 @@ impl SpellChecker {
 
     /// Add words to the spell checker.
     ///
-    /// ## Implementation Note
+    /// ### Implementation Note
     /// On Windows, this will add the word to the IGNORE list instead of the dictionary.
     /// This is done to avoid adding the word permanently to the dictionary,
     ///
@@ -210,9 +210,6 @@ impl SpellChecker {
 
     /// Remove a single word from the spell checker.
     ///
-    /// ## Implementation Note
-    /// On Windows, this will be ignored.
-    ///
     /// @param {string} word The word to remove
     /// @returns {void}
     #[napi]
@@ -222,9 +219,6 @@ impl SpellChecker {
     }
 
     /// Remove words from the spell checker.
-    ///
-    /// ## Implementation Note
-    /// On Windows, this will be ignored.
     ///
     /// @param {string[]} words The words to remove
     /// @returns {void}

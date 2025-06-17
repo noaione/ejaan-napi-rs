@@ -5,14 +5,14 @@ use windows::{
         Foundation::S_OK,
         Globalization::{
             CORRECTIVE_ACTION_DELETE, CORRECTIVE_ACTION_GET_SUGGESTIONS, CORRECTIVE_ACTION_NONE,
-            CORRECTIVE_ACTION_REPLACE, GetUserDefaultLocaleName, ISpellChecker,
+            CORRECTIVE_ACTION_REPLACE, GetUserDefaultLocaleName, ISpellChecker2,
             ISpellCheckerFactory, LOCALE_NAME_SYSTEM_DEFAULT, SpellCheckerFactory,
         },
         System::Com::{
             CLSCTX_ALL, COINIT_MULTITHREADED, CoCreateInstance, CoInitializeEx, CoTaskMemFree,
         },
     },
-    core::{HSTRING, PCWSTR, PWSTR},
+    core::{HSTRING, Interface, PCWSTR, PWSTR},
 };
 
 use crate::{
@@ -22,45 +22,56 @@ use crate::{
 
 pub struct WindowsSpellChecker {
     inner: ISpellCheckerFactory,
-    checker: ISpellChecker,
+    checker: ISpellChecker2,
     locale: String,
 }
 
 impl WindowsSpellChecker {
     /// Create a new instance of the Windows spell checker.
     pub fn new() -> EjaanError<Self> {
-        unsafe {
-            CoInitializeEx(None, COINIT_MULTITHREADED).ok()?;
+        unsafe { CoInitializeEx(None, COINIT_MULTITHREADED).ok()? };
 
-            let inner: ISpellCheckerFactory =
-                CoCreateInstance(&SpellCheckerFactory, None, CLSCTX_ALL)?;
+        let inner: ISpellCheckerFactory =
+            unsafe { CoCreateInstance(&SpellCheckerFactory, None, CLSCTX_ALL)? };
 
-            let mut locale_name = [0u16; 256];
-            GetUserDefaultLocaleName(&mut locale_name);
-            let all_null = locale_name.iter().all(|&c| c == 0);
+        let mut locale_name = [0u16; 256];
+        unsafe { GetUserDefaultLocaleName(&mut locale_name) };
+        let all_null = locale_name.iter().all(|&c| c == 0);
 
-            let locale_name = if all_null {
-                LOCALE_NAME_SYSTEM_DEFAULT
-            } else {
-                PCWSTR::from_raw(locale_name.as_ptr())
+        let locale_name = if all_null {
+            LOCALE_NAME_SYSTEM_DEFAULT
+        } else {
+            PCWSTR::from_raw(locale_name.as_ptr())
+        };
+
+        let checker = Self::make_spell_checker(&inner, locale_name)?;
+
+        let locale = if all_null {
+            "en-US".to_string() // Default to English if no locale is set
+        } else {
+            let locale_wide = unsafe {
+                // Convert the locale name from wide string to UTF-8
+                locale_name.as_wide()
             };
+            String::from_utf16_lossy(locale_wide)
+                .trim_end_matches('\0')
+                .to_string()
+        };
 
-            let checker = inner.CreateSpellChecker(locale_name)?;
+        Ok(Self {
+            inner,
+            checker,
+            locale,
+        })
+    }
 
-            let locale = if all_null {
-                "en-US".to_string() // Default to English if no locale is set
-            } else {
-                String::from_utf16_lossy(locale_name.as_wide())
-                    .trim_end_matches('\0')
-                    .to_string()
-            };
+    fn make_spell_checker(
+        factory: &ISpellCheckerFactory,
+        locale: PCWSTR,
+    ) -> EjaanError<ISpellChecker2> {
+        let checker = unsafe { factory.CreateSpellChecker(locale)? };
 
-            Ok(Self {
-                inner,
-                checker,
-                locale,
-            })
-        }
+        Ok(checker.cast::<ISpellChecker2>()?)
     }
 
     fn common_spellcheck(&self, word: &str) -> EjaanError<Vec<TokenWithSuggestions>> {
@@ -114,7 +125,9 @@ impl WindowsSpellChecker {
                         unsafe {
                             _ = suggestions.Next(&mut suggestion, None);
                         }
+
                         if suggestion[0].is_null() {
+                            unsafe { CoTaskMemFree(Some(suggestion[0].as_ptr() as *mut _)) };
                             break;
                         }
 
@@ -159,31 +172,29 @@ impl WindowsSpellChecker {
 
 impl SpellCheckerImpl for WindowsSpellChecker {
     fn get_available_languages(&self) -> EjaanError<Vec<String>> {
-        unsafe {
-            let mut merged = Vec::new();
-            let results = self.inner.SupportedLanguages()?;
+        let mut merged = Vec::new();
+        let results = unsafe { self.inner.SupportedLanguages()? };
 
-            loop {
-                let mut suggestion = [PWSTR::null()];
-                _ = results.Next(&mut suggestion, None);
-                if suggestion[0].is_null() {
-                    break;
-                }
-
-                let lang_str = suggestion[0].to_string().map_err(|e| {
-                    crate::utils::Error::new(format!(
-                        "Failed to convert language PWSTR to string: {}",
-                        e
-                    ))
-                })?;
-
-                merged.push(lang_str);
-
-                CoTaskMemFree(Some(suggestion[0].as_ptr() as *mut _));
+        loop {
+            let mut suggestion = [PWSTR::null()];
+            _ = unsafe { results.Next(&mut suggestion, None) };
+            if suggestion[0].is_null() {
+                break;
             }
 
-            Ok(merged)
+            let lang_str = unsafe { suggestion[0].to_string() }.map_err(|e| {
+                crate::utils::Error::new(format!(
+                    "Failed to convert language PWSTR to string: {}",
+                    e
+                ))
+            })?;
+
+            merged.push(lang_str);
+
+            unsafe { CoTaskMemFree(Some(suggestion[0].as_ptr() as *mut _)) };
         }
+
+        Ok(merged)
     }
 
     fn check_word(&self, word: &str) -> EjaanError<bool> {
@@ -196,20 +207,23 @@ impl SpellCheckerImpl for WindowsSpellChecker {
     }
 
     fn add_word(&self, word: &str) -> EjaanError<()> {
-        unsafe {
-            let wide_word = word.encode_utf16().collect::<Vec<u16>>();
-            let ptr = PCWSTR::from_raw(wide_word.as_ptr());
-            // > Use Ignore instead of Add.
-            // Since according to MSFT themselves, Ignore will only happens
-            // only on the current checker instances itself rather than updating
-            // globally.
-            self.checker.Ignore(ptr)?;
+        let wide_word = word.encode_utf16().collect::<Vec<u16>>();
+        let ptr = PCWSTR::from_raw(wide_word.as_ptr());
+        // > Use Ignore instead of Add.
+        // Since according to MSFT themselves, Ignore will only happens
+        // only on the current checker instances itself rather than updating
+        // globally.
+        unsafe { self.checker.Ignore(ptr) }?;
 
-            Ok(())
-        }
+        Ok(())
     }
 
-    fn remove_word(&self, _: &str) -> EjaanError<()> {
+    fn remove_word(&self, word: &str) -> EjaanError<()> {
+        let wide_word = word.encode_utf16().collect::<Vec<u16>>();
+        let ptr = PCWSTR::from_raw(wide_word.as_ptr());
+
+        unsafe { self.checker.Remove(ptr)? };
+
         Ok(())
     }
 
@@ -218,19 +232,17 @@ impl SpellCheckerImpl for WindowsSpellChecker {
     }
 
     fn set_language(&mut self, language: &str) -> EjaanError<bool> {
-        unsafe {
-            let locale = PCWSTR::from_raw(language.encode_utf16().collect::<Vec<u16>>().as_ptr());
+        let locale = PCWSTR::from_raw(language.encode_utf16().collect::<Vec<u16>>().as_ptr());
 
-            let ret = self.inner.IsSupported(locale)?;
-            if ret.as_bool() {
-                // Change the spell checker language
-                self.checker = self.inner.CreateSpellChecker(locale)?;
-                self.locale = language.to_string();
+        let ret = unsafe { self.inner.IsSupported(locale)? };
+        if ret.as_bool() {
+            // Change the spell checker language
+            self.checker = Self::make_spell_checker(&self.inner, locale)?;
+            self.locale = language.to_string();
 
-                Ok(true)
-            } else {
-                Ok(false)
-            }
+            Ok(true)
+        } else {
+            Ok(false)
         }
     }
 }
@@ -260,8 +272,6 @@ mod tests {
         let tokens = spell_checker
             .check_sentences(sentence)
             .expect("Failed to check sentences");
-
-        println!("Tokens: {:?}", tokens);
 
         assert_eq!(
             tokens.len(),

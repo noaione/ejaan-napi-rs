@@ -6,9 +6,17 @@ The following file contains all the changes made in `@noaione/ejaan-rs` package.
 ### Breaking Changes
 - Drop support for Windows ARM builds (for now).
 
+### Improvements
+- Replace `ISpellChecker` with `ISpellChecker2` interface.
+    - In turns, this will allow us to remove added/ignored words from the spell checker.
+
 ### Refactor
 - Use `unsafe` block only when necessary.
 - Create a stubs Spell Checker for unsupported platforms
+
+### Build
+- Test Rust code in CI
+- Bump internal dependencies to the latest versions
 
 ## [0.1.2] 2025-05-31
 ### Improvements
