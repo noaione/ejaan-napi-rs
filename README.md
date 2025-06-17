@@ -83,3 +83,6 @@ where `E` is a custom error type that can be converted to a JavaScript error.
 ## License
 
 This project is dual-licensed under the [Apache-2.0](https://github.com/noaione/ejaan-napi-rs/blob/master/LICENSE-APACHE) and [MIT](https://github.com/noaione/ejaan-napi-rs/blob/master/LICENSE-MIT) licenses at your convenience.
+
+See the [docs/licenses.md](https://github.com/noaione/ejaan-napi-rs/blob/master/docs/licenses.md) for third-party licenses used in this project.
+
