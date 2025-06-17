@@ -3,6 +3,9 @@
 The following file contains all the changes made in `@noaione/ejaan-rs` package.
 
 ## Unreleased
+### Breaking Changes
+- Drop support for Windows ARM builds (for now).
+
 ### Refactor
 - Use `unsafe` block only when necessary.
 - Create a stubs Spell Checker for unsupported platforms

@@ -38,9 +38,6 @@ jobs:
             build: yarn build --target x86_64-pc-windows-msvc
             target: x86_64-pc-windows-msvc
           - host: windows-2025
-            build: yarn build --target aarch64-pc-windows-msvc
-            target: aarch64-pc-windows-msvc
-          - host: windows-2025
             build: yarn build --target i686-pc-windows-msvc
             target: i686-pc-windows-msvc
     name: stable - ${{ matrix.settings.target }} - node@20
@@ -124,9 +121,6 @@ jobs:
             build: yarn build --target x86_64-pc-windows-msvc
             target: x86_64-pc-windows-msvc
           - host: windows-2025
-            build: yarn build --target aarch64-pc-windows-msvc
-            target: aarch64-pc-windows-msvc
-          - host: windows-2025
             build: yarn build --target i686-pc-windows-msvc
             target: i686-pc-windows-msvc
     name: Test rust code on ${{ matrix.settings.target }}
@@ -176,10 +170,6 @@ jobs:
           - host: windows-2025
             target: x86_64-pc-windows-msvc
             arch: x64
-          # Ignore testing in arm64 windows for now, because it's broken.
-          # - host: windows-2025
-          #   target: aarch64-pc-windows-msvc
-          #   arch: arm64
           - host: windows-2025
             target: i686-pc-windows-msvc
             arch: x86
@@ -245,6 +235,7 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v') && github.repository_owner == 'noaione'
     needs:
+      - test-rust
       - test-binding
       - universal-macOS
     steps:
