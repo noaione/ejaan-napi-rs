@@ -3,8 +3,8 @@
 The following file contains all the changes made in `@noaione/ejaan-rs` package.
 
 ## Unreleased
-
-Nothing yet!
+### Refactor
+- Use `unsafe` block only when necessary.
 
 ## [0.1.2] 2025-05-31
 ### Improvements
