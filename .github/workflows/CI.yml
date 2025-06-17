@@ -107,7 +107,59 @@ jobs:
           name: bindings-${{ matrix.settings.target }}
           path: ${{ env.APP_NAME }}.*.node
           if-no-files-found: error
-  test-macOS-windows-binding:
+  test-rust:
+    needs:
+      - build
+    strategy:
+      fail-fast: false
+      matrix:
+        settings:
+          - host: macos-15
+            target: x86_64-apple-darwin
+            build: yarn build --target x86_64-apple-darwin
+          - host: macos-15
+            target: aarch64-apple-darwin
+            build: yarn build --target aarch64-apple-darwin
+          - host: windows-2025
+            build: yarn build --target x86_64-pc-windows-msvc
+            target: x86_64-pc-windows-msvc
+          - host: windows-2025
+            build: yarn build --target aarch64-pc-windows-msvc
+            target: aarch64-pc-windows-msvc
+          - host: windows-2025
+            build: yarn build --target i686-pc-windows-msvc
+            target: i686-pc-windows-msvc
+    name: Test rust code on ${{ matrix.settings.target }}
+    runs-on: ${{ matrix.settings.host }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        if: ${{ !matrix.settings.docker }}
+        with:
+          toolchain: stable
+          targets: ${{ matrix.settings.target }}
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            .cargo-cache
+            target/
+          key: ${{ matrix.settings.target }}-cargo-${{ matrix.settings.host }}
+      - name: Setup toolchain
+        run: ${{ matrix.settings.setup }}
+        if: ${{ matrix.settings.setup }}
+        shell: bash
+      - name: Test
+        run: |
+          cargo test --target ${{ matrix.settings.target }} --verbose
+          cargo test --target ${{ matrix.settings.target }} --verbose --release
+        if: ${{ !matrix.settings.docker }}
+        shell: bash
+  test-binding:
     name: Test bindings on ${{ matrix.settings.target }} - node@20
     needs:
       - build
@@ -193,7 +245,7 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v') && github.repository_owner == 'noaione'
     needs:
-      - test-macOS-windows-binding
+      - test-binding
       - universal-macOS
     steps:
       - uses: actions/checkout@v4
